@@ -6,7 +6,7 @@ on:
 jobs:
   build_push:
     runs-on: ubuntu-latest
-    environment: production
+    environment: prod
     strategy:
       matrix:
         app: [client, author]
@@ -39,7 +39,7 @@ jobs:
 
   rollout_k8s:
     runs-on: ubuntu-latest
-    environment: production
+    environment: prod
     needs: build_push
 
     steps:
