@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard — ShopsOnBoard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header admin-header">
+        <div>
+          <h1>ShopsOnBoard <span class="admin-badge">Admin</span></h1>
+          <p>Manage posts — delete posts or remove individual images.</p>
+        </div>
+        <form action="/logout" method="post">
+          <button type="submit" class="logout-btn">Sign out</button>
+        </form>
+      </header>
+
+      <% if (error) { %>
+        <p class="alert alert-error"><%= error %></p>
+      <% } %>
+      <% if (success) { %>
+        <p class="alert alert-success"><%= success %></p>
+      <% } %>
+
+      <% if (sellers && sellers.length) { %>
+      <section class="sellers-section">
+        <h2>Seller Applications</h2>
+        <% sellers.forEach(function(s) { %>
+          <div class="seller-card card">
+            <div class="seller-card-header">
+              <div>
+                <strong><%= s.shopName %></strong>
+                <span class="seller-subdomain-tag"><%= s.subdomain %>.shopsonboard.com</span>
+              </div>
+              <span class="seller-status-badge badge-<%= s.status %>"><%= s.status %></span>
+            </div>
+            <p><strong>Brand:</strong> <%= s.brandName %></p>
+            <p><strong>Email:</strong> <%= s.email %></p>
+            <% if (s.address) { %><p><strong>Address:</strong> <%= s.address %></p><% } %>
+            <% if (s.tel) { %><p><strong>Tel:</strong> <%= s.tel %></p><% } %>
+            <% if (s.brandLogoUrl) { %>
+              <img src="<%= s.brandLogoUrl %>" alt="Brand logo" class="seller-logo-preview" />
+            <% } %>
+            <p style="color:#6b7280;font-size:0.85rem">Applied: <%= new Date(s.createdAt).toLocaleString() %></p>
+            <% if (s.status === 'pending') { %>
+              <div class="seller-actions">
+                <form action="/sellers/<%= s.id %>/approve" method="post" style="display:inline"
+                  onsubmit="return confirm('Approve this seller? Remember to create the Cloudflare DNS record for <%= s.subdomain %>.shopsonboard.com')">
+                  <button type="submit" class="approve-btn">Approve</button>
+                </form>
+                <form action="/sellers/<%= s.id %>/reject" method="post" style="display:inline"
+                  onsubmit="return confirm('Reject this seller application?')">
+                  <button type="submit" class="reject-btn">Reject</button>
+                </form>
+              </div>
+            <% } %>
+          </div>
+        <% }); %>
+      </section>
+      <% } %>
+
+      <section class="feed">
+        <% if (!posts.length) { %>
+          <article class="card empty-state">
+            <p>No posts yet.</p>
+          </article>
+        <% } %>
+
+        <% posts.forEach(function(post) { %>
+          <%
+            const postImages = (post.images && post.images.length)
+              ? post.images
+              : [{ url: post.imageUrl, key: post.imageKey }];
+          %>
+          <article class="card post admin-post">
+
+            <%# ── Images with per-image remove button ── %>
+            <div class="admin-image-grid">
+              <% postImages.forEach(function(img, idx) { %>
+                <div class="admin-image-wrap">
+                  <img src="<%= img.url %>" alt="Post image" loading="lazy" />
+                  <% if (postImages.length > 1) { %>
+                    <form
+                      action="/posts/<%= post.id %>/images/<%= idx %>/remove"
+                      method="post"
+                      class="remove-image-form"
+                      onsubmit="return confirm('Remove this image from the post?')"
+                    >
+                      <button type="submit" class="remove-image-btn" aria-label="Remove image">&#x2715;</button>
+                    </form>
+                  <% } %>
+                </div>
+              <% }); %>
+            </div>
+
+            <%# ── Post body ── %>
+            <div class="post-body">
+              <% if (post.caption) { %>
+                <p class="caption"><%= post.caption %></p>
+              <% } %>
+
+              <div class="post-meta">
+                <span><%= new Date(post.createdAt).toLocaleString() %></span>
+                <span class="likes-count">👍 <%= post.likes %></span>
+              </div>
+
+              <%# ── Delete whole post ── %>
+              <form
+                action="/posts/<%= post.id %>/delete"
+                method="post"
+                class="delete-post-form"
+                onsubmit="return confirm('Delete this entire post? This cannot be undone.')"
+              >
+                <button type="submit" class="delete-post-btn">Delete post</button>
+              </form>
+            </div>
+          </article>
+        <% }); %>
+      </section>
+    </main>
+  </body>
+</html>

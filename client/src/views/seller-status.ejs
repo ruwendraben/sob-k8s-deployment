@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seller Status — ShopsOnBoard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body class="auth-body">
+    <div class="seller-reg-card">
+      <h1 class="auth-title">Seller Application</h1>
+
+      <div class="seller-status-details">
+        <p><strong>Shop:</strong> <%= seller.shopName %></p>
+        <p><strong>Brand:</strong> <%= seller.brandName %></p>
+        <p><strong>Subdomain:</strong> <%= seller.subdomain %>.shopsonboard.com</p>
+        <% if (seller.address) { %><p><strong>Address:</strong> <%= seller.address %></p><% } %>
+        <% if (seller.tel) { %><p><strong>Tel:</strong> <%= seller.tel %></p><% } %>
+        <% if (seller.brandLogoUrl) { %>
+          <img src="<%= seller.brandLogoUrl %>" alt="Brand logo" class="seller-logo-preview" />
+        <% } %>
+
+        <p style="margin-top:16px">
+          <strong>Status:</strong>
+          <span class="seller-status-badge badge-<%= seller.status %>"><%= seller.status %></span>
+        </p>
+
+        <% if (seller.status === 'pending') { %>
+          <p style="color:#6b7280">Your application is being reviewed. You will see your shop link on your posts once approved.</p>
+        <% } else if (seller.status === 'approved') { %>
+          <p style="color:#166534">Congratulations! Your shop is live at
+            <a href="/<%= seller.subdomain %>" target="_blank"><%= seller.subdomain %>.shopsonboard.com</a>.
+            Your subdomain link will appear on all your new posts.
+          </p>
+          <a href="/seller/edit" class="btn-seller" style="display:inline-block;margin-top:12px">✏️ Edit Shop Profile</a>
+        <% } else { %>
+          <p style="color:#991b1b">Your application was rejected. Please contact support for details.</p>
+        <% } %>
+      </div>
+
+      <p class="auth-switch"><a href="/">← Back to timeline</a></p>
+    </div>
+  </body>
+</html>

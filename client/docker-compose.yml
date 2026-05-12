@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    container_name: public-image-timeline
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - DB_SSL=false
+    restart: unless-stopped
+    networks:
+      - sob-net
+
+networks:
+  sob-net:
+    external: true

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Shop — ShopsOnBoard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body class="auth-body">
+    <div class="seller-reg-card">
+      <h1 class="auth-title">Edit Shop Profile</h1>
+      <p class="auth-sub">Update your shop's public page details.</p>
+
+      <% if (error) { %>
+        <p class="alert alert-error"><%= error %></p>
+      <% } %>
+      <% if (success) { %>
+        <p class="alert alert-success"><%= success %></p>
+      <% } %>
+
+      <form action="/seller/edit" method="post" enctype="multipart/form-data" class="auth-form">
+        <label for="motto">Motto / Tagline (shown as cover heading)</label>
+        <input type="text" id="motto" name="motto" placeholder="Quality you can trust" value="<%= seller.motto || '' %>" />
+
+        <label for="shopName">Shop Name</label>
+        <input type="text" id="shopName" name="shopName" value="<%= seller.shopName %>" required />
+
+        <label for="brandName">Brand Name</label>
+        <input type="text" id="brandName" name="brandName" value="<%= seller.brandName %>" required />
+
+        <label for="address">Address (also used for Google Maps)</label>
+        <input type="text" id="address" name="address" value="<%= seller.address || '' %>" placeholder="123 Main St, London" />
+
+        <label for="tel">Telephone</label>
+        <input type="tel" id="tel" name="tel" value="<%= seller.tel || '' %>" />
+
+        <label for="employeeCount">Number of Employees</label>
+        <input type="text" id="employeeCount" name="employeeCount" value="<%= seller.employeeCount || '' %>" placeholder="e.g. 12" />
+
+        <label for="employeeOfYear">Employee of the Year</label>
+        <input type="text" id="employeeOfYear" name="employeeOfYear" value="<%= seller.employeeOfYear || '' %>" placeholder="e.g. Jane Smith" />
+
+        <label for="brandLogo">Update Brand Logo (optional, max 10MB)</label>
+        <% if (seller.brandLogoUrl) { %>
+          <img src="<%= seller.brandLogoUrl %>" alt="Current logo" class="seller-logo-preview" />
+        <% } %>
+        <input type="file" id="brandLogo" name="brandLogo" accept="image/*" class="file-input" />
+
+        <button type="submit">Save Changes</button>
+      </form>
+
+      <p class="auth-switch">
+        <a href="/<%= seller.subdomain %>">View Shop Page</a> &middot;
+        <a href="/seller/status">← Back to status</a>
+      </p>
+    </div>
+  </body>
+</html>

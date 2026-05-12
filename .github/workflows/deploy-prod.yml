@@ -1,0 +1,107 @@
+name: Deploy to Production (ECR + k3s via SSM)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_push:
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      matrix:
+        app: [client, author]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image (${{ matrix.app }})
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: sob-prod/${{ matrix.app }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        working-directory: ${{ matrix.app }}
+
+  rollout_k8s:
+    runs-on: ubuntu-latest
+    environment: production
+    needs: build_push
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Rollout on k3s via SSM
+        id: ssm
+        env:
+          AWS_REGION: eu-west-2
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          INSTANCE_TAG_NAME: tf-prod
+          K8S_NAMESPACE: sob
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=tag:Name,Values=$INSTANCE_TAG_NAME" \
+            --comment "SOB prod k8s rollout from GitHub Actions ${GITHUB_SHA}" \
+            --parameters "commands=[
+              \"set -e\",
+              \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY\",
+              \"kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml set image deployment/sob-client sob-client=$ECR_REGISTRY/sob-prod/client:latest -n $K8S_NAMESPACE\",
+              \"kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml set image deployment/sob-author sob-author=$ECR_REGISTRY/sob-prod/author:latest -n $K8S_NAMESPACE\",
+              \"kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml rollout status deployment/sob-client -n $K8S_NAMESPACE --timeout=120s\",
+              \"kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml rollout status deployment/sob-author -n $K8S_NAMESPACE --timeout=120s\"
+            ]" \
+            --query "Command.CommandId" \
+            --output text)
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+
+      - name: Wait for rollout to complete
+        env:
+          AWS_REGION: eu-west-2
+          INSTANCE_TAG_NAME: tf-prod
+          COMMAND_ID: ${{ steps.ssm.outputs.command_id }}
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --filters "Name=tag:Name,Values=$INSTANCE_TAG_NAME" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
+
+          aws ssm wait command-executed \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID"
+
+          STATUS=$(aws ssm get-command-invocation \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "Status" \
+            --output text)
+
+          echo "SSM status: $STATUS"
+          test "$STATUS" = "Success"

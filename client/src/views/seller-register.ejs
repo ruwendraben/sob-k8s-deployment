@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Become a Seller — ShopsOnBoard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body class="auth-body">
+    <div class="seller-reg-card">
+      <h1 class="auth-title">Become a Seller</h1>
+      <p class="auth-sub">Register your shop and get your own subdomain on ShopsOnBoard.</p>
+
+      <% if (error) { %>
+        <p class="alert alert-error"><%= error %></p>
+      <% } %>
+
+      <form action="/seller/register" method="post" enctype="multipart/form-data" class="auth-form">
+        <label for="subdomain">Subdomain</label>
+        <div class="subdomain-wrap">
+          <input type="text" id="subdomain" name="subdomain" placeholder="myshop" required
+            pattern="[a-z0-9][a-z0-9\-]{1,28}[a-z0-9]"
+            title="3–30 chars: lowercase letters, numbers, hyphens. No start/end hyphen." />
+          <span class="subdomain-suffix">.shopsonboard.com</span>
+        </div>
+
+        <label for="shopName">Shop Name</label>
+        <input type="text" id="shopName" name="shopName" placeholder="My Corner Shop" required />
+
+        <label for="brandName">Brand Name</label>
+        <input type="text" id="brandName" name="brandName" placeholder="Brand" required />
+
+        <label for="address">Address</label>
+        <input type="text" id="address" name="address" placeholder="123 Main St (optional)" />
+
+        <label for="tel">Telephone</label>
+        <input type="tel" id="tel" name="tel" placeholder="+1 234 567 8900 (optional)" />
+
+        <label for="brandLogo">Brand Logo (optional, max 10MB)</label>
+        <input type="file" id="brandLogo" name="brandLogo" accept="image/*" class="file-input" />
+
+        <button type="submit">Submit Application</button>
+      </form>
+
+      <p class="auth-switch"><a href="/">← Back to timeline</a></p>
+    </div>
+  </body>
+</html>

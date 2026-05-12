@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShopsOnBoard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div class="header-top">
+          <h1>ShopsOnBoard</h1>
+          <nav class="auth-nav">
+            <% if (user) { %>
+              <% if (!seller) { %>
+                <a href="/seller/register" class="btn-seller">Become a Seller</a>
+              <% } else if (seller.status === 'approved') { %>
+                <a href="/seller/status" class="btn-seller">My Shop</a>
+              <% } else { %>
+                <a href="/seller/status" class="seller-pending-link">Seller: <%= seller.status %></a>
+              <% } %>
+              <span class="auth-email"><%= user.email %></span>
+              <form action="/logout" method="post" style="display:inline">
+                <button type="submit" class="btn-ghost">Sign out</button>
+              </form>
+            <% } else { %>
+              <a href="/login" class="btn-ghost">Sign in</a>
+              <a href="/signup" class="btn-primary-sm">Sign up</a>
+            <% } %>
+          </nav>
+        </div>
+        <p>Discover and support your local corner shops on ShopsOnBoard—post photos publicly, share updates on the timeline, and help everyone find nearby stores easily.</p>
+      </header>
+
+      <% if (user) { %>
+      <section class="composer card">
+        <% if (error) { %>
+          <p class="alert alert-error"><%= error %></p>
+        <% } %>
+        <% if (success) { %>
+          <p class="alert alert-success"><%= success %></p>
+        <% } %>
+        <button type="button" id="open-composer-btn" class="compose-bar-btn">Post to timeline</button>
+      </section>
+
+      <input id="file-picker" type="file" accept="image/*" multiple style="display:none" />
+
+      <dialog id="compose-modal" class="compose-modal">
+        <form action="/posts" method="post" enctype="multipart/form-data" id="compose-form">
+          <input id="form-images" name="images" type="file" accept="image/*" multiple style="display:none" />
+          <div class="compose-modal-header">
+            <h2>Create post</h2>
+            <button type="button" id="close-modal-btn" class="close-btn" aria-label="Close">&#x2715;</button>
+          </div>
+          <div class="compose-modal-body">
+            <div id="image-preview-grid" class="image-preview-grid"></div>
+            <button type="button" id="add-more-btn" class="add-more-btn">+ Add more photos</button>
+            <textarea name="caption" rows="3" placeholder="Write a caption..." class="caption-input"></textarea>
+            <p class="hint">Max image size: <%= maxFileSizeMb %>MB each</p>
+            <button type="submit" class="publish-btn">Publish</button>
+          </div>
+        </form>
+      </dialog>
+      <% } %>
+
+      <section class="feed">
+        <% if (!posts.length) { %>
+          <article class="card empty-state">
+            <p>No posts yet. Be the first one to upload.</p>
+          </article>
+        <% } %>
+
+        <% posts.forEach((post) => { %>
+          <% const postImages = (post.images && post.images.length) ? post.images : [{url: post.imageUrl}]; %>
+          <% const countLikeLabel = post.likes > 0 ? 'Likes' : 'Like'; %>
+          <article class="card post">
+            <% if (postImages.length === 1) { %>
+              <img src="<%= postImages[0].url %>" alt="Timeline image" loading="lazy" />
+            <% } else { %>
+              <div class="multi-image-grid grid-<%= Math.min(postImages.length, 4) %>">
+                <% postImages.slice(0, 4).forEach(function(img, idx) { %>
+                  <div class="multi-image-cell">
+                    <img src="<%= img.url %>" alt="Timeline image" loading="lazy" />
+                    <% if (idx === 3 && postImages.length > 4) { %>
+                      <div class="more-overlay">+<%= postImages.length - 4 %> more</div>
+                    <% } %>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <div class="post-body">
+              <% if (post.caption) { %>
+                <p class="caption"><%= post.caption %></p>
+              <% } %>
+
+              <div class="post-meta">
+                <span><%= new Date(post.createdAt).toLocaleString() %></span>
+                <% if (user) { %>
+                <button
+                  type="button"
+                  class="like-btn<%= post.likedByUser ? ' liked' : '' %>"
+                  data-id="<%= post.id %>"
+                  data-likes="<%= post.likes %>"
+                  data-can-like="true"
+                  aria-label="Like post"
+                >
+                  <svg class="like-thumb" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+                  </svg>
+                  <span class="like-label"><%= post.likedByUser ? 'Liked' : countLikeLabel %></span>
+                  <span class="like-count"><%= post.likes %></span>
+                </button>
+                <% } else { %>
+                <span class="like-btn like-readonly" aria-label="Like count">
+                  <svg class="like-thumb" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+                  </svg>
+                  <span class="like-label"><%= countLikeLabel %></span>
+                  <span class="like-count"><%= post.likes %></span>
+                </span>
+                <% } %>
+              </div>
+              <% if (post.sellerSubdomain) { %>
+                <a href="https://<%= post.sellerSubdomain %>.shopsonboard.com" target="_blank" class="seller-post-link">
+                  🛒 <%= post.sellerSubdomain %>.shopsonboard.com
+                </a>
+              <% } %>
+            </div>
+          </article>
+        <% }) %>
+      </section>
+    </main>
+  <script>
+    // Composer (only present when logged in)
+    (function () {
+      var openBtn = document.getElementById('open-composer-btn');
+      if (!openBtn) return;
+      var filePicker = document.getElementById('file-picker');
+      var formImages = document.getElementById('form-images');
+      var modal = document.getElementById('compose-modal');
+      var closeBtn = document.getElementById('close-modal-btn');
+      var previewGrid = document.getElementById('image-preview-grid');
+      var addMoreBtn = document.getElementById('add-more-btn');
+      var dt = new DataTransfer();
+
+      function renderPreviews() {
+        previewGrid.innerHTML = '';
+        Array.from(dt.files).forEach(function (file) {
+          var wrap = document.createElement('div');
+          wrap.className = 'preview-wrap';
+          var img = document.createElement('img');
+          img.className = 'preview-img';
+          var reader = new FileReader();
+          reader.onload = function (e) { img.src = e.target.result; };
+          reader.readAsDataURL(file);
+          wrap.appendChild(img);
+          previewGrid.appendChild(wrap);
+        });
+      }
+
+      openBtn.addEventListener('click', function () {
+        dt = new DataTransfer();
+        filePicker.value = '';
+        filePicker.click();
+      });
+
+      filePicker.addEventListener('change', function () {
+        Array.from(filePicker.files).forEach(function (f) { dt.items.add(f); });
+        formImages.files = dt.files;
+        renderPreviews();
+        if (!modal.open) modal.showModal();
+      });
+
+      addMoreBtn.addEventListener('click', function () {
+        filePicker.value = '';
+        filePicker.click();
+      });
+
+      closeBtn.addEventListener('click', function () { modal.close(); });
+
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) modal.close();
+      });
+    }());
+
+    // Like buttons (signed-in users only)
+    document.querySelectorAll('.like-btn[data-can-like="true"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.dataset.id;
+        fetch('/posts/' + id + '/like', { method: 'POST' })
+          .then(function (r) {
+            if (!r.ok) throw new Error('Unable to like this post.');
+            return r.json();
+          })
+          .then(function (data) {
+            btn.dataset.likes = data.likes;
+            btn.classList.toggle('liked', data.likedByUser);
+            btn.classList.add('pop');
+            btn.querySelector('.like-label').textContent = data.likedByUser ? 'Liked' : (data.likes > 0 ? 'Likes' : 'Like');
+            btn.querySelector('.like-count').textContent = data.likes;
+            setTimeout(function () { btn.classList.remove('pop'); }, 300);
+          })
+          .catch(function () {
+            // Keep UI stable on request failures.
+          });
+      });
+    });
+  </script>
+  </body>
+</html>

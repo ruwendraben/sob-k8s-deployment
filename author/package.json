@@ -1,0 +1,23 @@
+{
+  "name": "sob-author",
+  "version": "1.0.0",
+  "description": "Admin panel for ShopsOnBoard",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "check": "node --check src/server.js && node --check src/s3.js && node --check src/ssm.js && node --check src/store.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.883.0",
+    "@aws-sdk/client-ssm": "^3.883.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

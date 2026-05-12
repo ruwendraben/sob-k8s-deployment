@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= seller.shopName %> — ShopsOnBoard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <!-- Hero / Cover -->
+    <section class="shop-hero">
+      <div class="shop-hero-overlay">
+        <% if (seller.brandLogoUrl) { %>
+          <img src="<%= seller.brandLogoUrl %>" alt="<%= seller.brandName %>" class="shop-hero-logo" />
+        <% } %>
+        <h1 class="shop-hero-motto">
+          <% if (seller.motto) { %>
+            <%= seller.motto %>
+          <% } else { %>
+            <%= seller.shopName %>
+          <% } %>
+        </h1>
+        <p class="shop-hero-brand"><%= seller.brandName %></p>
+      </div>
+    </section>
+
+    <main class="shop-container">
+      <!-- About -->
+      <section class="shop-section">
+        <h2>About Us</h2>
+        <div class="shop-about-grid">
+          <div class="shop-about-card">
+            <span class="shop-about-icon">🏢</span>
+            <h3><%= seller.shopName %></h3>
+            <p><%= seller.brandName %></p>
+          </div>
+          <% if (seller.employeeCount) { %>
+          <div class="shop-about-card">
+            <span class="shop-about-icon">👥</span>
+            <h3><%= seller.employeeCount %></h3>
+            <p>Employees</p>
+          </div>
+          <% } %>
+          <% if (seller.employeeOfYear) { %>
+          <div class="shop-about-card">
+            <span class="shop-about-icon">⭐</span>
+            <h3><%= seller.employeeOfYear %></h3>
+            <p>Employee of the Year</p>
+          </div>
+          <% } %>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section class="shop-section">
+        <h2>Contact</h2>
+        <div class="shop-contact">
+          <% if (seller.address) { %>
+            <p>📍 <strong>Address:</strong> <%= seller.address %></p>
+          <% } %>
+          <% if (seller.tel) { %>
+            <p>📞 <strong>Tel:</strong> <%= seller.tel %></p>
+          <% } %>
+          <p>🌐 <strong>Web:</strong> <%= seller.subdomain %>.shopsonboard.com</p>
+        </div>
+      </section>
+
+      <!-- Google Maps -->
+      <% if (seller.address) { %>
+      <section class="shop-section">
+        <h2>Find Us</h2>
+        <div class="shop-map">
+          <iframe
+            width="100%"
+            height="350"
+            style="border:0;border-radius:10px"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps?q=<%= encodeURIComponent(seller.address) %>&output=embed"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+      <% } %>
+
+      <footer class="shop-footer">
+        <p>Powered by <a href="/">ShopsOnBoard</a></p>
+      </footer>
+    </main>
+  </body>
+</html>

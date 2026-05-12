@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign up — ShopsOnBoard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body class="auth-body">
+    <div class="auth-card">
+      <h1 class="auth-title">ShopsOnBoard</h1>
+      <p class="auth-sub">Create a member account</p>
+
+      <% if (error) { %>
+        <p class="alert alert-error"><%= error %></p>
+      <% } %>
+
+      <form action="/signup" method="post" class="auth-form">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8" />
+        <p class="hint">Minimum 8 characters</p>
+
+        <label for="confirm">Confirm password</label>
+        <input id="confirm" name="confirm" type="password" autocomplete="new-password" required />
+
+        <button type="submit">Create account</button>
+      </form>
+
+      <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+    </div>
+  </body>
+</html>
